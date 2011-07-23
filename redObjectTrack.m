@@ -14,7 +14,7 @@ function redObjectTrack()
     set(gcf,'KeyPressFcn',@closeFigure);
     %start the video aquisition here
     start(vid)
-
+    
     running = true;
     try
         while running 
@@ -36,11 +36,11 @@ function redObjectTrack()
             diff_im = bwareaopen(diff_im,300);
 
             % Label all the connected components in the image.
-            bw = bwlabel(diff_im, 8);
+%             bw = bwlabel(diff_im, 8);
 
             % Here we do the image blob analysis.
             % We get a set of properties for each labeled region.
-            stats = regionprops(bw, 'BoundingBox', 'Centroid');
+            stats = regionprops(diff_im, 'BoundingBox', 'Centroid');
 
             % Display the image
 %             imshow(data)
