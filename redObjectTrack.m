@@ -13,7 +13,12 @@ function redObjectTrack()
     vid.FrameGrabInterval = 5;
     set(gcf,'KeyPressFcn',@closeFigure);
     %start the video aquisition here
+    %get image size
+    tmp = getsnapshot(vid);
+    dsize = size(tmp);
     start(vid)
+    
+    
     
     running = true;
     try
@@ -21,12 +26,13 @@ function redObjectTrack()
 
             % Get the snapshot of the current frame
             data = getsnapshot(vid);
+            flushdata(vid);
             
             % Now to track red objects in real time
             % we have to subtract the red component 
             % from the grayscale image to extract the red components in the image.
             diff_im = imsubtract(data(:,:,1), rgb2gray(data));
-            diff_im = fliplr(diff_im);
+%             diff_im = fliplr(diff_im);
             %Use a median filter to filter out noise
             diff_im = medfilt2(diff_im, [3 3]);
             % Convert the resulting grayscale image into a binary image.
@@ -40,7 +46,7 @@ function redObjectTrack()
 
             % Here we do the image blob analysis.
             % We get a set of properties for each labeled region.
-            stats = regionprops(diff_im, 'BoundingBox', 'Centroid');
+            stats = regionprops(diff_im, 'BoundingBox', 'Centroid', 'Area');
 
             % Display the image
 %             imshow(data)
@@ -49,12 +55,17 @@ function redObjectTrack()
 
             %This is a loop to bound the red objects in a rectangular box.
             for object = 1:length(stats)
-                bb = stats(object).BoundingBox;
-                bc = stats(object).Centroid;
-                rectangle('Position',bb,'EdgeColor','r','LineWidth',2)
-                plot(bc(1),bc(2), '-m+')
-                a=text(bc(1)+15,bc(2), strcat('X: ', num2str(round(bc(1))), '    Y: ', num2str(round(bc(2)))));
-                set(a, 'FontName', 'Arial', 'FontWeight', 'bold', 'FontSize', 12, 'Color', 'yellow');
+                if (stats(object).Area < 20000  &&  stats(object).Area > 500)
+                    bb = stats(object).BoundingBox;
+                    bc = stats(object).Centroid;
+    %                 a=text(bc(1)+15,bc(2), strcat('Area: ', num2str(round(stats(object).Area))));
+                    bc(1) = dsize(2) - bc(1);
+
+                    rectangle('Position',bb,'EdgeColor','r','LineWidth',2)
+                    plot(bc(1),bc(2), '-m+')
+                    a=text(bc(1)+15,bc(2), strcat('X: ', num2str(round(bc(1))), '    Y: ', num2str(round(bc(2)))));
+                    set(a, 'FontName', 'Arial', 'FontWeight', 'bold', 'FontSize', 12, 'Color', 'yellow');
+                end;
             end
 
             hold off
