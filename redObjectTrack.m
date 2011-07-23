@@ -1,4 +1,4 @@
-function redObjectTrack()    
+function redObjectTrack( color )    
     a = imaqhwinfo;
     [camera_name, camera_id, format] = getCameraInfo(a);
 
@@ -6,6 +6,15 @@ function redObjectTrack()
     % Capture the video frames using the videoinput function
     % You have to replace the resolution & your installed adaptor name.
     vid = videoinput(camera_name, camera_id, format);
+    
+    switch (color)
+        case 'red'
+            trackIndex = 1;
+        case 'green'
+            trackIndex = 2;
+        case 'blue'
+            trackIndex = 3;
+    end
 
     % Set the properties of the video object
     set(vid, 'FramesPerTrigger', Inf);
@@ -19,7 +28,7 @@ function redObjectTrack()
     whiteBoard = ones(dsize);
     start(vid)
     
-    imshow(whiteBoard);
+    figure, imshow(whiteBoard);
     
     p1 = [ -1, -1 ];
     running = true;
@@ -33,7 +42,7 @@ function redObjectTrack()
             % Now to track color objects in real time
             % we have to subtract the color component 
             % from the grayscale image to extract the color components in the image.
-            diff_im = imsubtract(data(:,:,1), rgb2gray(data));
+            diff_im = imsubtract(data(:,:,trackIndex), rgb2gray(data));
 
             %Use a median filter to filter out noise
             diff_im = medfilt2(diff_im, [3 3]);
@@ -68,7 +77,7 @@ function redObjectTrack()
                             r = ceil(point(1));
                             c = ceil(point(2));
 %                             whiteBoard(c,r,1) = 1;
-                            plot(r,c, '-m+', 'color', 'r');
+                            plot(r,c, '-m+', 'color', color);
                         end
                         p1 = bc;
                     end;

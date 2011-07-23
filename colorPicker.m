@@ -33,6 +33,7 @@ function varargout = colorPicker_OutputFcn(hObject, eventdata, handles)
 end
 
 function pushbutton1_Callback(hObject, eventdata, handles)
+    redObjectTrack( handles.trackColor );
     close;
 end
 
