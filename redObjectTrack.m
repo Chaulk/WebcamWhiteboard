@@ -1,4 +1,5 @@
-function redObjectTrack( color )    
+function redObjectTrack(  )   
+       color = 'red';
     a = imaqhwinfo;
     [camera_name, camera_id, format] = getCameraInfo(a);
 
@@ -25,10 +26,12 @@ function redObjectTrack( color )
     %get image size
     whiteBoard = getsnapshot(vid);
     dsize = size(whiteBoard);
-    whiteBoard = ones(dsize);
+    rows = dsize(1);
+    cols = dsize(2);
+    whiteBoard = zeros(dsize);
     start(vid)
     
-    figure, imshow(whiteBoard);
+    imshow(whiteBoard);
     
     p1 = [ -1, -1 ];
     running = true;
@@ -49,43 +52,52 @@ function redObjectTrack( color )
             % Convert the resulting grayscale image into a binary image.
             diff_im = im2bw(diff_im,0.18);
 
-            % Remove all those pixels less than 300px
-            diff_im = bwareaopen(diff_im,300);
-
+            % Remove all those pixels less than 500px
+            diff_im = bwareaopen(diff_im,500);
+%             imshow(diff_im);
             % Here we do the image blob analysis.
             % We get a set of properties for each labeled region.
-            stats = regionprops(diff_im, 'BoundingBox', 'Centroid', 'Area');
+            stats = regionprops(diff_im, 'Centroid', 'Area');
 
             % Display the image
-%             imshow(whiteBoard);
+            imshow(whiteBoard);
             hold on
 
             %This is a loop to bound the red objects in a rectangular box.
             for object = 1:length(stats)
-                if (stats(object).Area < 20000  &&  stats(object).Area > 500)
-                    bb = stats(object).BoundingBox;
+                if (stats(object).Area < 20000 )
+%                     bb = stats(object).BoundingBox;
                     bc = stats(object).Centroid;
     %                 a=text(bc(1)+15,bc(2), strcat('Area: ', num2str(round(stats(object).Area))));
                     bc(1) = dsize(2) - bc(1);
+                    p2 = bc;% [ bc(2), bc(1) ];
+                    
+                    dist = sqrt( ((p1(1)-p2(1))^2) + ((p1(2)-p2(2))^2) );
                     
                     if ( isequal(p1, [-1,-1]) )
-                        p1 = bc;
-                    else
-                        inds = getLineIndeces(p1,bc);
+                        p1 = p2;
+                    elseif dist < 1000
+                        inds = getLineIndeces(p1,p2);
                         for i=1:length(inds)
                             point = inds(i,:);
                             r = ceil(point(1));
                             c = ceil(point(2));
-%                             whiteBoard(c,r,1) = 1;
-                            plot(r,c, '-m+', 'color', color);
+                            whiteBoard(c,r,1) = 255;
+%                             plot(r,c, '-m+', 'color', color);
                         end
-                        p1 = bc;
+%                         N = min( abs(p1(1)-bc(2)), abs(p1(2)-bc(1)));
+%                         N = max(1, N);
+%                         rpts = linspace(p1(1), bc(2), N);
+%                         cpts = linspace(p1(2), bc(1), N);
+%                         index = sub2ind([rows, cols], round(rpts), round(cpts));
+%                         whiteBoard(index) = 255;
+                        p1 = p2;
                     end;
 
                 end;
             end
-            
-%             hold off
+%             imshow(whiteBoard);
+            hold off
         end
     catch exception
         stop(vid);
