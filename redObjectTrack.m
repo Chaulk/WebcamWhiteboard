@@ -1,25 +1,39 @@
-function redObjectTrack( color )    
+function redObjectTrack( )    
     a = imaqhwinfo;
     [camera_name, camera_id, format] = getCameraInfo(a);
+    
+    
+    color = questdlg('What colour would you like to track?', ...
+                     'Track Color', ...
+                     'Red','Green','Blue',...
+                     'Red');
 
-
+    
+    frames = inputdlg('Enter Frame Grab Interval ( 1 - 25)',...
+                      'Choose Frame Grab Interval',1,{'5'});
+                  
+class(frames(1))
+sprintf('%s|',frames{:})
     % Capture the video frames using the videoinput function
     % You have to replace the resolution & your installed adaptor name.
     vid = videoinput(camera_name, camera_id, format);
     
     switch (color)
-        case 'red'
+        case 'Red'
+            color = 'red';
             trackIndex = 1;
-        case 'green'
+        case 'Green'
+            color = 'green';
             trackIndex = 2;
-        case 'blue'
+        case 'Blue'
+            color = 'blue';
             trackIndex = 3;
     end
 
     % Set the properties of the video object
     set(vid, 'FramesPerTrigger', Inf);
     set(vid, 'ReturnedColorspace', 'rgb')
-    vid.FrameGrabInterval = 5;
+    vid.FrameGrabInterval = str2num(sprintf('%s',frames{:}));
     set(gcf,'KeyPressFcn',@closeFigure);
     %start the video aquisition here
     %get image size
