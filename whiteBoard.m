@@ -15,17 +15,22 @@ function whiteBoard( )
     % Get the video input...
     vid = videoinput(camera_name, camera_id, format);
     
+    binThresh = 0.18;
+    
     % set the index based on color
     switch (color)
         case 'Red'
-            color = 'red';
             trackIndex = 1;
         case 'Green'
-            color = 'green';
             trackIndex = 2;
+            %Green requires more sensitive thresholding for the markers we
+            %have..
+            binThresh = 0.1;
         case 'Blue'
-            color = 'blue';
             trackIndex = 3;
+        otherwise
+            disp('Assumed red...');
+            trackIndex = 1;
     end
 
     % Set the video object properties..
@@ -67,10 +72,10 @@ function whiteBoard( )
             diff_im = imsubtract(data(:,:,trackIndex), rgb2gray(data));
 
             % Convert the image into a binary image...
-            diff_im = im2bw(diff_im,0.18);
+            diff_im = im2bw(diff_im, binThresh);
 
             % Remove small objects with an area less than 1000px^2
-            diff_im = bwareaopen(diff_im,1000);
+            diff_im = bwareaopen(diff_im,500);
 
             % get calculate the centroid, Area, and eccetricity (invariant)
             % of every object in the image..
@@ -109,27 +114,31 @@ function whiteBoard( )
                     bc = stats(object).Centroid;
                     bc(1) = dsize(2) - bc(1);
                     p2 = bc;
+                    plot(bc(1), bc(2), '-m+', 'color', 'magenta');
+                    if ( stats(object).Area > 2500 )
+                        dist = sqrt( ((p1(1)-p2(1))^2) + ((p1(2)-p2(2))^2) );
 
-                    dist = sqrt( ((p1(1)-p2(1))^2) + ((p1(2)-p2(2))^2) );
-
-                    if ( isequal(p1, [-1,-1]) )
-                        %new starting point
-                        p1 = p2;
-                    elseif dist < (cols/5) %apply the same distance sensitivity
-                        % Calculate the line of best fit..
-                        inds = getLineIndeces(p1,p2);
-                        % paint the whiteboard..
-                        for i = 1 : size(inds,1)
-                            point = inds(i,:);
-                            r = ceil(point(1));
-                            c = ceil(point(2));
-                            whiteBoard(c,r,trackIndex) = 255;
-                        end
-                        p1 = p2;
+                        if ( isequal(p1, [-1,-1]) )
+                            %new starting point
+                            p1 = p2;
+                        elseif dist < (cols/5) %apply the same distance sensitivity
+                            % Calculate the line of best fit..
+                            inds = getLineIndeces(p1,p2);
+                            % paint the whiteboard..
+                            for i = 1 : size(inds,1)
+                                point = inds(i,:);
+                                r = ceil(point(1));
+                                c = ceil(point(2));
+                                whiteBoard(c,r,trackIndex) = 255;
+                            end
+                            p1 = p2;
+                        else
+                            %Flag for a new starting point..
+                            p1 = [-1,-1];
+                        end;
                     else
-                        %Flag for a new starting point..
                         p1 = [-1,-1];
-                    end;
+                    end
                 else
                     %if no object is found.. then begin drawing anew..
                     p1 = [-1,-1];
@@ -160,6 +169,18 @@ function whiteBoard( )
             running = false;
         elseif strcmpi(keyIn,'c') %Clear the whiteboard..
             whiteBoard = zeros(dsize);
+        elseif strcmpi(keyIn,'r')
+            p1 = [-1, -1];
+            trackIndex = 1;
+            binThresh = 0.18;
+        elseif strcmpi(keyIn,'g')
+            p1 = [-1, -1];
+            trackIndex = 2;
+            binThresh = 0.05;
+        elseif strcmpi(keyIn,'b')
+            p1 = [-1, -1];
+            trackIndex = 3;
+            binThresh = 0.18;
         end
     end
 end
